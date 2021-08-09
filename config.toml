@@ -1,0 +1,44 @@
+baseURL = "https://sofwareconviction.com"
+languageCode = "en-us"
+title = "conviction"
+theme = "gohugo-theme-ananke"
+resourceDir = "../resources"
+featured_image = "/images/antwerp_skyline.jpg"
+
+
+DefaultContentLanguage = "en"
+SectionPagesMenu = "main"
+Paginate = 3 # this is set low for demonstrating with dummy content. Set to a higher number
+googleAnalytics = ""
+enableRobotsTXT = true
+
+[languages]
+  [languages.en]
+    title = "Experiments, opinions and ideas in software"
+    weight = 1
+    contentDir = "content"
+
+[sitemap]
+  changefreq = "monthly"
+  priority = 0.5
+  filename = "sitemap.xml"
+
+[params]
+  favicon = "favicon.ico"
+  site_logo = ""
+  description = "Experiments, opinions and ideas in software"
+  facebook = ""
+  twitter = "https://twitter.com/GoHugoIO"
+  instagram = ""
+  youtube = ""
+  github = "https://github.com/Hyardaowyn"
+  gitlab = ""
+  linkedin = "https://www.linkedin.com/in/geertvanwauwe/"
+  mastodon = ""
+  slack = ""
+  stackoverflow = "https://stackoverflow.com/users/5595258/hadronymous"
+  rss = ""
+  # choose a background color from any on this page: http://tachyons.io/docs/themes/skins/ and preface it with "bg-"
+  background_color_class = "bg-black"
+  featured_image = "/images/antwerp_skyline_wide.png"
+  recent_posts_number = 2

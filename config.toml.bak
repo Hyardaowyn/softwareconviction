@@ -1,0 +1,4 @@
+baseURL = "https://softwareconviction.com/"
+languageCode = "en-us"
+title = "Software Conviction: a blog about software development"
+theme ="ananke" 
