@@ -3,11 +3,11 @@ title: "The effect of memory configuration on AWS Lambda's network throughput"
 date: 2022-04-07T18:28:22+02:00
 draft: false
 ---
-#Introduction
+# Introduction
 AWS Lambda is AWS's implementation of a serverless function.
 A short-lived container that can execute custom code.
 It allows you to move fast, without having to provision a server and the maintenance burden that comes with it.
-Oh and you only pay for the time your code is actually executing.
+Oh, and you only pay for the time your code is actually executing.
 What is there not to love.
 
 # The Problem
@@ -75,14 +75,14 @@ However, since increasing memory also increases CPU, as mentioned in [the docs](
 AWS Lambda will bill you for every GB-s you are using<sup>1</sup>. So one would expect that increasing the memory i.e. the GB part of GB-s, increases the cost. However, this can be offset by the reduced Lambda execution time (the s part of GB-s).
 By increasing the memory from `256 MB` to `1536 MB` the cost dropped because of the reduced execution time.
 
-##Benefits
+## Benefits
 * faster execution time
 * lower cost
 * lower lambda timeout
 * faster retry possible
-#Conclusion
+# Conclusion
 Increasing the memory of a lambda function not only increases the CPU power, but also increases network throughput drastically.
 
 
-######footnotes
+###### footnotes
 <sup>1</sup>: This is not completely true, you are not billed for the initialization of the Lambda function.
