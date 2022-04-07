@@ -1,0 +1,4 @@
+baseURL = 'https://softwareconviction.com/'
+languageCode = 'en-us'
+title = 'Software blog by Geert Van Wauwe'
+theme = "ananke"
