@@ -8,7 +8,7 @@ AWS Lambda is AWS's implementation of a serverless function.
 A short-lived container that can execute custom code.
 It allows you to move fast, without having to provision a server and the maintenance burden that comes with it.
 Oh, and you only pay for the time your code is actually executing.
-What is there not to love.
+What is there not to love?
 
 # The Problem
 AWS Lambda is probably my favorite AWS service, and I have been using it extensively for over 3 years.
@@ -21,10 +21,10 @@ The average transferred image size is about `20 MB`, so I had expected most of t
 Let's say 2 to 3 seconds tops.
 Carefully examining the metrics, I noticed that a duration of 50 seconds was not exactly exceptional. Something was definitely going on here.
 
-Since the documentation on network throughput speeds of lambda is rather limited. This [blogpost](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-2/), briefly mentions
+The documentation on network throughput speeds of lambda is unfortunately rather limited. This [blogpost](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-2/), briefly mentions
 > Generally, CPU-bound Lambda functions see the most benefit when memory increases, whereas network-bound see the least..
 
-But most documentation is focussed on the relation between Lambda memory and CPU.
+But Most documentation however, is focussed on the relation between Lambda memory and CPU.
 Not a promising start... 
 but the network throughput seemed so low that increasing the memory was worth a shot.
 Increasing the memory from `256 MB` to `5120 MB` and immediately resulted in a severe drop of Lambda duration. 
