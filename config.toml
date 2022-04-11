@@ -1,4 +1,5 @@
 baseURL = 'https://softwareconviction.com/'
 languageCode = 'en-us'
-title = 'Software blog by Geert Van Wauwe'
+title = 'Blog on software, infrastructure and its accompanying lifestyle'
 theme = "ananke"
+disqusShortname = 'softwareconviction-com'
