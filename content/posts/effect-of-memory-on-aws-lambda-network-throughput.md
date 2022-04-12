@@ -21,8 +21,8 @@ The average transferred image size is about `20 MB`, so I had expected most of t
 Let's say 2 to 3 seconds tops.
 Carefully examining the metrics, I noticed that a duration of 50 seconds was not exactly exceptional. Something was definitely going on here.
 
-The documentation on network throughput speeds of Lambda is unfortunately rather limited. This [blogpost](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-2/) briefly mentions
-> Generally, CPU-bound Lambda functions see the most benefit when memory increases, whereas network-bound see the least..
+The documentation on network throughput speeds of Lambda is unfortunately rather limited. This [blogpost](https://aws.amazon.com/blogs/compute/operating-lambda-performance-optimization-part-2/) briefly mentions:
+> Generally, CPU-bound Lambda functions see the most benefit when memory increases, whereas network-bound see the least.
 
 Most documentation however, is focused on the relation between Lambda memory and CPU.
 Not a promising start... 
@@ -67,8 +67,8 @@ The average throughput is calculated based on the `45 MB` image.
 ![Execution time vs Configured memory](/ExecutionTimeVSConfiguredMemory.png)
 ## Interpretation of the Results
 
-One does not need to be a math-wiz to see where this is going. Increasing the memory of the AWS Lambda function, increases throughput drastically.
-These experimental results suggest that network throughput of AWS Lambda is impacted by the memory configuration, briefly mentioned [here](https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html).
+One does not need to be a math-wiz to see where this is going. Increasing the memory of the AWS Lambda function increases throughput drastically.
+These experimental results suggest that the network throughput of AWS Lambda is impacted by the memory configuration, briefly mentioned [here](https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html).
 However, since increasing memory also increases the CPU, as mentioned in [the docs](https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-memory-console), it's still possible that the CPU is the bottleneck.
 
 ## Cost Analysis
