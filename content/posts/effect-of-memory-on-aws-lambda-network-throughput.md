@@ -3,6 +3,11 @@ title: "The effect of memory configuration on AWS Lambda's network throughput"
 date: 2022-04-07T18:28:22+02:00
 draft: false
 ---
+
+# The effect of memory configuration on AWS Lambda's network throughput
+This post will investigate the effect of various memory configurations on the perceived network throughput of AWS Lambda.
+A brief introduction of AWS Lambda is given and the throughput during upload of a fixed size image is analyzed.
+Finally, I will do a cost analysis and summarize the findings.
 # What is AWS Lambda
 AWS Lambda is AWS's implementation of a serverless function.
 A short-lived container that can execute custom code.
