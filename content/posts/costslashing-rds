@@ -110,7 +110,22 @@ There are two storage types for RDS instances:
 gp2 is great for variable workloads, while io1 works better for more constant workloads or for RDS instances that will need a high amount of IOPS.
 
 #### IOPS
-GP2 will give you a BurstBalance that can be used 
+IOPS is a way of representing input/output operations per second.
+GP2 will give you a BurstBalance of IOPS which is basically a bucket of credits, that can be used for queries and writes to the RDS instance.
+IO1 will give you a provisioned amount of IOPS.
+
+##### IOPS baseline
+For provisioned IOPS i.e. IO1 the baseline is the amount of provisioned IOPS.
+For gp2 you can calculate the baseline IOPS based on the allocated storage size in GB:
+GP2 baseline IOPS = 3 IOPS/GB * storage size in GB
+The minimum amount of IOPS for a GP2 volume is 100 IOPS, this is relevant for small volumes as shown by the following example:
+given an RDS instance with 25 GB of allocated storage, the calculated baseline IOPS is:
+3 IOPS/GB * storage size in GB = 3 IOPS/GB * 25 GB = 75 IOPS
+But since this is smaller than 100 IOPS the baseline IOPS becomes 100 IOPS.
+
+
+
+
 If you have a variable workload 
 
 
