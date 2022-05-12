@@ -77,37 +77,36 @@ Initial compute cost = $0.608 X 24 X 30 = $437.76.
 compute cost after scale down = $0.258 X 24 X 30 = $185.76
 a cost reduction of 57.5%.
 
-
-
-
-
-
-### real life use case
-At the time of writing an RDS instance is running with sometimes only 3% free memory[2].
-Ignoring AWS's advice (https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/).
-The Swap Usage metric increases regularly, so scaling up vertically seems reasonable.
-However, since there is no visible impact on the write latency, read latency nor on the CPU, it is a calculated risk which reduces costs significantly.
-Keep in mind that downscaling one instance size reduces the cost by a factor 2. Choosing to not scale up one instance size in this case, saves a considerable amount of money.
+### An additional real life use case
+At the time of writing a different MySQL RDS instance is running which ignores AWS's advice (https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/) since at peak Memory usage it only has 3% Free Memory.
+The monitoring shows that the swap Usage metric increases regularly, so scaling up vertically seems reasonable.
+However there is no visible impact on write latency, read latency nor on CPU Utilization.
+At this point it is a calculated risk which reduces costs significantly.
+Keep in mind that downscaling one instance size reduces the cost by a factor 2. 
+Choosing to not scale up one instance size in this case, saves a considerable amount of money.
 It is very much recommended having some CloudWatch alarms in place, should the read or write latency exceed a certain arbitrary threshold.
 
-## multi-AZ 
-RDS instances can be run with multi AZ availability. Choose this option if your database needs to be high available. It will protect you from hardware failure and from an availability zone going down as a whole.
+## Multi-AZ 
+RDS instances can be run with multi AZ availability. 
+Choose this option if your database needs to be high available.
+It will protect you from hardware failure and from an availability zone going down as a whole.
 Having your RDS instance run with multi AZ availability provides faster recovery, since failover is a breeze. 
 Consider disabling multi AZ when faster recovery is unnecessary which is the case for most test environments.
 Running the test RDS instance in single AZ availability will cut its compute and storage cost in half.
 
 ### real life use case
 The RDS instances in our test environment run in single AZ availability because the impact of having an RDS instance fail is limited.
-The MySQL RDS instances that run in production have been deployed multi AZ as the cost of downtime is rather large. 
-
+The MySQL RDS instance that runs in production have been deployed multi AZ as the cost of downtime is rather large. 
+Our test environment was already configured as single AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
 
 ## Stopping unused RDS instances versus Reserved Instances
 More costs can be saved by either stopping RDS instances during periods in which they are not used but this has to be carefully compared to reserving instances.
 ### unused RDS instances
-Look at the usage patterns of your RDS instances. If the database is only used during business hours or extended business hours, consider stopping the RDS instance when it is not used to save on compute costs.
+Look at the usage patterns of your RDS instances.
+If the database is only used during business hours or extended business hours, consider stopping the RDS instance when it is not used to save on compute costs.
 This can be done by triggering an AWS Lambda Function at certain times.
 AWS will still charge you for the allocated storage of the RDS instance, but you will not have to pay for the compute part of the RDS instance costs.
-If your RDS instances is only used 5 days a week from 9AM until 5 PM then you can stop the RDS instance down at 5PM and start it again at 9AM on weekdays.
+If your RDS instances is only used 5 days a week from 9AM until 5 PM then you can stop the RDS instance at 5PM and start it again at 9AM on weekdays.
 The RDS instance will only be used 5*8 hours a week, which is about 24% of the time, so you can save approximately 76% on RDS compute costs.
 
 ### Reserved instances
@@ -115,11 +114,11 @@ Once you have decided upon which instance class to use, you should look into res
 Reserved instances allows you to save up to almost 70% of your costs compared to the on-demand rate.
 The cost saving is heavily class type dependent. 
 
-### Which option do I choose
+### Which option should I pick?
 Pick the option with the largest cost saving.
 If both are approximately equal consider whether you are sure that you will need the RDS instance for the reserved amount of time, if there is any doubt, choose stopping and starting instances during periods in which they are not used.
 
-### real life use case
+### Real life use case
 We do not stop unused RDS instances since both on our test and on our production environment, the database is used from 6AM up until 2AM, while also having some batch operations running between 2AM and 6AM.
 Quite evidently we chose to reserve our RDS instances.
 In our particular case we were running multiple instance types of the RDS t4g class. Since we cannot confidently predict the workload on our database for the coming year, we chose to reserve our RDS instances for one year with partial upfront payment, leading to a cost reduction of approximately 37% (see Reserved Instances on https://aws.amazon.com/rds/mysql/pricing/).
