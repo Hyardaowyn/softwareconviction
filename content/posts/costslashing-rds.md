@@ -1,7 +1,7 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
 date: 2022-05-03T18:28:22+02:00
-draft: false
+draft: true
 ---
 
 # A step by step guide on how to reduce costs for an RDS instance
@@ -114,27 +114,39 @@ Once you have decided upon which instance class to use, you should look into res
 Reserved instances allows you to save up to almost 70% of your costs compared to the on-demand rate.
 The cost saving is heavily class type dependent. 
 
+#### Size flexibility
+Bear in mind that you can also make use of size flexibility for Reserved Instances.
+If you are sure about the chosen RDS instance family, such as db.m6, db.r3 or db.t4g, and the minimum instance type, such as medium, large or 2xlarge, you need, then go ahead and reserve the minimum instance type of that specific db instance family already.
+The size flexibility will allow two reserved RDS instances to count as one reserved RDS instance of one instance type higher.
 ### Which option should I pick?
 Pick the option with the largest cost saving.
-If both are approximately equal consider whether you are sure that you will need the RDS instance for the reserved amount of time, if there is any doubt, choose stopping and starting instances during periods in which they are not used.
+If both are approximately equal consider whether you are sure that you will need the RDS instance for the reserved amount of time.
+If there is any doubt, go for stopping and starting instances during periods in which they are not used.
 
 ### Real life use case
-We do not stop unused RDS instances since both on our test and on our production environment, the database is used from 6AM up until 2AM, while also having some batch operations running between 2AM and 6AM.
-Quite evidently we chose to reserve our RDS instances.
-In our particular case we were running multiple instance types of the RDS t4g class. Since we cannot confidently predict the workload on our database for the coming year, we chose to reserve our RDS instances for one year with partial upfront payment, leading to a cost reduction of approximately 37% (see Reserved Instances on https://aws.amazon.com/rds/mysql/pricing/).
+Stopping and starting the RDS instance in our production environment because the database is used most of the time.
+We did not stop the MySQL RDS instances in our test environment, although this probably would have been more cost-effective.
+Our sprint backlog is already filled to the brim, so it would have probably taken a couple of weeks in order to work on stopping and starting RDS instances.
+Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
+In our particular case we were running multiple instance types of the RDS t4g class.
+We cannot confidently predict the workload on our database for years to come. Hence, reserving RDS instances for one year with partial upfront payment seems the best option for now.
+This leads to a cost reduction of approximately 37% (see Reserved Instances on https://aws.amazon.com/rds/mysql/pricing/).
 
-### Size flexibility
-Bear in mind that you can also make use of size flexibility for Reserved Instances.
-If you are sure about the chosen RDS instance class and the minimum instance type you need, then go ahead and reserve the minimum instance type already.
-The size flexibility will allow two reserved RDS instances to count as one reserved RDS instance of one instance type higher.
-The following scenario might this more clear. 
-Suppose you currently have an rds.t4g.medium database running in a single AZ.
-You do not know whether the database workload will increase in the coming months, but you are sure that it will not decrease.
-It might be possible that the database needs to be deployed Multi-AZ in the coming months.
-In this case, choose to reserve one rds.t4g.medium single AZ instance already.
-If at some point in time you need to scale up to an rds.t4g.large single AZ instance, you can simply reserve another rds.t4g.medium single AZ instance. 
-One reserved rds.t4g.large single AZ instance counts as two reserved rds.t4g.medium single AZ instances.
-For multi AZ the same trick applies. One reserved multi AZ rds.t4g.medium instance counts as two reserved single AZ rds.t4g.medium instances.
+
+Regarding size flexibility. Once the RDS instance class has been decided, you should reserve the minimum expected baseline.
+In our AWS account there are 3 test MySQL RDS instances and 3 production MySQL instances.
+All of them are primarily used during extended business hours but the loads differ.
+Since all access patterns are similar the burstable database instance family `db.t4g` was chosen.
+The currently experienced baseline load for a test environment was optimally covered by one t4g.medium (Single AZ).
+The currently experienced baseline load over the three production environments could be covered by 1 t4g.medium, 1 t4g.large and 1 t4g.xlarge. All of the production environment were set up in multi AZ.
+
+By making use of size flexibility it is not that difficult to calculate the amount of t4g.medium single AZ instances necessary.
+You can calculate the current baseline summing up all db instance equivalent baselines.
+t4g.2xlarge (multi AZ) = 2 t4g.xlarge (multi AZ) = 2. (2 t4g.large (multi AZ)) = 4. ( 2 t4g.medium (multi AZ)) = 8. ( 2 t4g.medium (single AZ)) = 16 t4g.medium (single AZ)
+So one t4g.2xlarge multi AZ instance can be reserved by reserving 16 single AZ t4g.medium instances.
+An instance of which the size is equivalent to 2 instances of one size smaller.
+A multi AZ instance is equivalent to 2 single AZ instances of the same size.
+
 
 ## Allocated storage
 There are multiple ways to save costs on allocated storage.
@@ -167,7 +179,8 @@ For GP2 you can calculate the baseline IOPS based on the allocated storage size 
 GP2 baseline IOPS = maximum of 3 IOPS/GB * storage size in GB and 100 IOPS = MAX(3*storageSizeInGB,100) IOPS
 The minimum amount of IOPS for a GP2 volume is thus 100 IOPS.
 
-Most RDS instances have a variable workload so that GP2 is the better candidate. In what follows only GP2 volumes are considered.
+Most RDS instances have a variable workload so that GP2 is the better candidate.
+In what follows only GP2 volumes are considered.
 
 #### RDS instances backed by GP2 storage.
 #####  An example on how to calculate the IOPS baseline
@@ -182,7 +195,8 @@ Storage costs are a bit higher than $0.11 per Gigabyte per month, depending on t
 If you have a single AZ RDS instance with 1 TB of allocated GP2 storage, it will cost you a bit more than $110 per month.
 Having a multi AZ RDS instance will double the cost, since the secondary instance also has a GP2 storage of the same size attached to it.
 Look at the Free Storage Space metric for the RDS instance to see how much Storage space the RDS instance actually uses.
-It is tempting to reduce the storage size to what you actually use plus some margin for safety. But do not do that just yet. You will have to make sure that you have enough IOPS capacity after storage size reduction!
+It is tempting to reduce the storage size to what you actually use plus some margin for safety. But do not do that just yet.
+Make sure you have enough IOPS capacity after storage size reduction!
 
 ##### Reducing the storage size while taking IOPS into account
 If IOPS does not pose a problem, then decrease the storage size to what you actually use plus some margin for safety. Autoscaling storage or rather auto increasing storage is possible, but is out of scope for this post.
