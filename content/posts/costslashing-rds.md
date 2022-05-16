@@ -51,21 +51,21 @@ Reducing the VCPus by a factor of 2, roughly increases the CPUUtilization percen
 This heuristic can help you estimate how much you can downscale your database instance and when you would cross the 60% CPU Utilization limit more than a couple of minutes a day.
 Changing the instance class will always lead to some downtime so schedule it properly.
 ### Real life use case
-Initially a general purpose instance (db.m6g) of size `2xlarge` was chosen for the relational database.
-Since the database is primarily used during extended business hours, the instance class burstable performance (db.t4g) seems the most appropriate choice.
+Initially a general purpose instance (`db.m6g`) of size `2xlarge` was chosen for the relational database.
+Since the database is primarily used during extended business hours, the instance class burstable performance (`db.t4g`) seems the most appropriate choice.
 #### Analyzing the metrics
 ##### CPU Utilization analysis
 A db.m6g.2xlarge instance has 8 VCPUs. As you can see on the graph, on the 21st of March, the maximum of the CPU Utilization within a 5-minute period, crosses 30% more than a couple of times.
 As mentioned before, reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
 Scaling down vertically to 4 VCPUs is the limit since the maximum of CPU Utilization will cross the 50% barrier more than a couple of minutes a day.
-db.t4g.xlarge has 4VCPUs, so do not go smaller than db.t4g.xlarge.
+db.t4g.xlarge has 4 VCPUs, so do not go smaller than `db.t4g.xlarge`.
 
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization_Before.png)
 ##### Freeable Memory analysis
 A `db.m6g.2xlarge` instance has `32GB` of memory. 
 As you can see on the graph, on the 21st of March there is `25GB` of `Freeable Memory` so approximately `7GB` is used.
 Therefor it is possible to estimate that `8GB` of RAM is sufficient.
-db.t4g.large has 8GB of RAM, so do not go smaller than db.t4g.large.
+`db.t4g.large` has 8GB of RAM, so do not go smaller than `db.t4g.large`.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory_Before.png)
 
 #### Conclusions
@@ -202,21 +202,61 @@ It is tempting to reduce the storage size to what you actually use plus some mar
 Make sure you have enough IOPS capacity after storage size reduction!
 
 ##### Reducing the storage size while taking IOPS into account
-If IOPS does not pose a problem, then decrease the storage size to what you actually use plus some margin for safety.
-Autoscaling storage or rather auto increasing storage is possible, but is out of scope for this post.
-If IOPS is the bottleneck, then calculate the storage size that replenishes the BurstBalance of the RDS instance fast enough, so it never gets depleted.
-Here is a spreadsheet (https://docs.google.com/spreadsheets/d/e/2PACX-1vRjkTJQIaRGKEuXjo4Bn3imwopOW_1Xx08jeLz8Xl-BYxyXC3gSlugFsRBrtKXTOwngI_nxq5hq_HZ6/pub?output=ods) that you can use to import your current WriteIOPS and ReadIOPS metrics.
-Then you can play around with the estimated IOPS to see the effect on the BurstBalance credits.
+If IOPS is the bottleneck, you can calculate the required allocated storage so that the BurstBalance never runs out of credits.
+This will be based on historical metrics of your database instance. In order to retrieve these metrics:
+1) go to CloudWatch.
+2) Search for `WriteIOPS`
+3) Click on Per-Database Metrics
+4) Check the box for `WriteIOPS` for the database in question
+5) Remove the query `WriteIOPS`
+6) Search for `ReadIOPS`
+7) Check the box for `ReadIOPS` for the database in question
+8) Apply a representative timerange
+9) Select `Average` as the `Statistic` in the `Graphed Metrics` Tab
+10) Select `5 minutes` as the `Period` in the `Graphed Metrics` Tab
+11) In the upper right corner click on `Actions` 
+12) After expansion of `Actions` click on `Download as .csv`
+13) Open a google spreadsheet
+14) Open https://docs.google.com/spreadsheets/d/e/2PACX-1vSnpbVo4KZKdRghQen-FLAOwft3OKDbOHogU2hn8sDrS35dc5kRkPKfnRVEso7jMTcnQ3nA64D17A9F/pub?output=ods
+15) Add a Column between Column C and Column D. This is Important do not skip this step.
+16) Highlight the first three columns, then select import.
+17) Choose upload
+18) Select the .csv file containing the IOPS metrics.
+19) In the Import File configuration select `Replace data at selected cell` as `import location`
+20) In the Import File configuration select `Detect automatically` as `separator type
+21) In the Import File configuration check `Convert text to numbers, dates and formulas`
+22) Click import data in the Import File configuration dialog box.
+23) Remove the recently added D column again
+24) Expand the formulas for column D,E,F,G,H and I, by going to row 2021 and double-clicking the bottom right corner of each last filled cell.
+25) Go to the `chart` sheet and edit the range of the chart to `data!A6:I{lastrow}` where `{lastrow}` is the last row number of your data.
+26) In the `edit chart` dialog, remove the Series you do not need such as `data!B6:I{lastrow}` and `data!C6:I{lastrow}`
+27) Now you can start playing around with the estimated IOPS located in the third row.
+28) See what the credits would have been if this amount of IOPS was added to the BurstBalance credits every second.
+29) Find an IOPS number such that the projected BurstBalance is comfortable enough at all times for your situation.
+30) Ideally the BurstBalance should never reach 0, since then the performance would be impacted heavily
+31) Divide the IOPS number by 3 to find the GP2 storage size you minimally need to sustain the burst necessary for your database access patterns.
 
 ##### Real life use case
-The ReadIOPS and WriteIOPS in the spreadsheet are the production ReadIOPS and WriteIOPS
-
+The ReadIOPS and WriteIOPS in the spreadsheet are the production ReadIOPS and WriteIOPS of the MySQL instance for a limited timeframe.
+On the 16th of May the hypothetical BurstBalance was at its lowest point in the selected time interval, so zoom in on this day.
+If only 350 IOPS credits are added to the BurstBalance credits every second, then there would be no credits left around 22:00.
+This is visible since the value of the blue line is 0 on the 16th of May around 22:00.
+The yellow line representing 400 IOPS added per second, reaches its lowest point of 775000 IOPS credits on the 16th of May around 22:05.
+Since the data is collected over two weeks, there might be future periods of higher database usage.
+To make sure there are still credits left, I chose to have at least 20% of credits left in this limited time window, which is 1120000 IOPS credits.
+Since the green line representing 425 IOPS does not drop below 1120000 IOPS credits, 425 IOPS is chosen as a safe IOPS baseline to replenish the BurstBalance.
+To calculate the size of the GP2 volume in GB to accommodate for this burst pattern, divide the required IOPS replenishing rate by 3, which is 141.6666 GB.
+The initially configured Volume size of this RDS instance was 500GB.
+Reducing the volume to 141.6666GB, slashes costs by another 71.8%.
 
 ## application optimization
+Costs can be further reduced by optimizing the application using the database so that less IOPS are used.
+If the database contains a lot of data, evaluate whether all this data is still necessary.
+Storing fewer data, or using less IOPS give you the opportunity to reduce the GP2 volume so that even more costs can be saved.
 
 ## database logs
 
 
 ###### footnotes
-<sup>2</sup>: The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly. 
+<sup>1</sup>: The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly. 
 
