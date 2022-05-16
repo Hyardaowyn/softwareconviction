@@ -1,7 +1,7 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
 date: 2022-05-03T18:28:22+02:00
-draft: true
+draft: false
 ---
 
 # A step by step guide on how to reduce costs for an RDS instance
@@ -47,6 +47,7 @@ If you are not quite sure how much Memory or CPU the instance will need it is be
 Once a utilization baseline has been established, you can consider scaling down the instance class type vertically.
 To scale down the instance class type confidently, check both CPU and Freeable memory metrics.
 Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance class type memory minus freeable memory) is more than 95% of the memory of the targeted scaled down database instance class type.
+The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly.
 Reducing the VCPus by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
 This heuristic can help you estimate how much you can downscale your database instance and when you would cross the 60% CPU Utilization limit more than a couple of minutes a day.
 Changing the instance class will always lead to some downtime so schedule it properly.
@@ -75,9 +76,9 @@ The effect on the `Freeable Memory` and the maximum of the `CPU Utilization` wit
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory.png)
 
 #### Cost reduction
-Initial compute cost = $0.608 X 24 X 30 = $437.76.
-compute cost after scale down = $0.258 X 24 X 30 = $185.76
-a cost reduction of 57.5%.
+Initial compute cost = $0.672 X 24 X 30 = $483.84.
+compute cost after scale down = $0.277 X 24 X 30 = $199.44
+A cost reduction of 58.8%.
 
 ### An additional real life use case
 At the time of writing a different MySQL RDS instance is running which ignores AWS's advice (https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/) since at peak Memory usage it only has 3% Free Memory.
@@ -204,7 +205,7 @@ Make sure you have enough IOPS capacity after storage size reduction!
 ##### Reducing the storage size while taking IOPS into account
 If IOPS is the bottleneck, you can calculate the required allocated storage so that the BurstBalance never runs out of credits.
 This will be based on historical metrics of your database instance. In order to retrieve these metrics:
-1) go to CloudWatch.
+1) Go to CloudWatch.
 2) Search for `WriteIOPS`
 3) Click on Per-Database Metrics
 4) Check the box for `WriteIOPS` for the database in question
@@ -247,16 +248,22 @@ To make sure there are still credits left, I chose to have at least 20% of credi
 Since the green line representing 425 IOPS does not drop below 1120000 IOPS credits, 425 IOPS is chosen as a safe IOPS baseline to replenish the BurstBalance.
 To calculate the size of the GP2 volume in GB to accommodate for this burst pattern, divide the required IOPS replenishing rate by 3, which is 141.6666 GB.
 The initially configured Volume size of this RDS instance was 500GB.
-Reducing the volume to 141.6666GB, slashes costs by another 71.8%.
+Reducing the volume to 141.6666GB, slashes storage costs by another 71.8%.
 
-## application optimization
+## Application optimization
 Costs can be further reduced by optimizing the application using the database so that less IOPS are used.
 If the database contains a lot of data, evaluate whether all this data is still necessary.
 Storing fewer data, or using less IOPS give you the opportunity to reduce the GP2 volume so that even more costs can be saved.
 
-## database logs
+## Database logs
+Consider not logging the database logs to cloudwatch to reduce Cloudwatch costs.
+### real-life use case
+Our logs are still sent to cloudwatch, since the cost is minimal compared to compute and storage, and it helps for troubleshooting.
 
-
-###### footnotes
-<sup>1</sup>: The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly. 
+#Cost savings summary
+compute costs reduced by 58.8% by rightsizing type and instance size.
+compute costs again reduced by 37% by reserving instances for one year.
+storage costs reduced by 71.8% by rightsizing the volume while taking BurstBalance into account.
+The compute costs were reduced by approximately 74% and the storage costs were reduced by 71.8%.
+Data transfer and log costs were rather limited, leading to an approximate cost saving of 70%.
 
