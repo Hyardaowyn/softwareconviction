@@ -1,7 +1,7 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
 date: 2022-05-03T18:28:22+02:00
-draft: false
+draft: true
 ---
 
 # A step by step guide on how to reduce costs for an RDS instance
