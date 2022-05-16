@@ -1,7 +1,7 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
 date: 2022-05-03T18:28:22+02:00
-draft: true
+draft: false
 ---
 
 # A step by step guide on how to reduce costs for an RDS instance
@@ -41,7 +41,7 @@ For example when the database is almost exclusively used during the day.
 Consider the memory optimized class (R,x and z instances) when you have a read heavy database workload.
 Consider the general purpose class for other workloads.
 
-## database instance class type
+## Database instance class type
 Choosing the right database instance class type and size is paramount in reducing AWS RDS costs.
 If you are not quite sure how much Memory or CPU the instance will need it is best to over-provision a little and start with a rather large instance class type.
 Once a utilization baseline has been established, you can consider scaling down the instance class type vertically.
@@ -56,19 +56,21 @@ Since the database is primarily used during extended business hours, the instanc
 #### Analyzing the metrics
 ##### CPU Utilization analysis
 A db.m6g.2xlarge instance has 8 VCPUs. As you can see on the graph, on the 21st of March, the maximum of the CPU Utilization within a 5-minute period, crosses 30% more than a couple of times.
-As mentioned before, reducing the VCPus by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
+As mentioned before, reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
 Scaling down vertically to 4 VCPUs is the limit since the maximum of CPU Utilization will cross the 50% barrier more than a couple of minutes a day.
 db.t4g.xlarge has 4VCPUs, so do not go smaller than db.t4g.xlarge.
 
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization_Before.png)
 ##### Freeable Memory analysis
-A db.m6g.2xlarge instance has 32GB of memory. As you can see on the graph, on the 21st of March there is 25GB of Freeable Memory so approximately 7 GB is used. Therefor it is possible to estimate that 8GB of RAM is enough.
+A `db.m6g.2xlarge` instance has `32GB` of memory. 
+As you can see on the graph, on the 21st of March there is `25GB` of `Freeable Memory` so approximately `7GB` is used.
+Therefor it is possible to estimate that `8GB` of RAM is sufficient.
 db.t4g.large has 8GB of RAM, so do not go smaller than db.t4g.large.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory_Before.png)
 
 #### Conclusions
-Since CPU seems to be the bottleneck, the instance type was changed to t4g.xlarge on the 23rd of March.
-The effect on the Freeable Memory and the maximum of the CPU Utilization within a 5-minute period, is shown in the graphs below.
+Since CPU seems to be the bottleneck, the instance type was changed to `t4g.xlarge` on the 23rd of March.
+The effect on the `Freeable Memory` and the maximum of the `CPU Utilization` within a 5-minute period, is shown in the graphs below.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization.png)
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory.png)
 
@@ -80,24 +82,24 @@ a cost reduction of 57.5%.
 ### An additional real life use case
 At the time of writing a different MySQL RDS instance is running which ignores AWS's advice (https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/) since at peak Memory usage it only has 3% Free Memory.
 The monitoring shows that the swap Usage metric increases regularly, so scaling up vertically seems reasonable.
-However there is no visible impact on write latency, read latency nor on CPU Utilization.
+However, there is no visible impact on write latency, read latency nor on CPU Utilization.
 At this point it is a calculated risk which reduces costs significantly.
 Keep in mind that downscaling one instance size reduces the cost by a factor 2. 
 Choosing to not scale up one instance size in this case, saves a considerable amount of money.
 It is very much recommended having some CloudWatch alarms in place, should the read or write latency exceed a certain arbitrary threshold.
 
 ## Multi-AZ 
-RDS instances can be run with multi AZ availability. 
+RDS instances can be run with multi-AZ availability. 
 Choose this option if your database needs to be high available.
 It will protect you from hardware failure and from an availability zone going down as a whole.
-Having your RDS instance run with multi AZ availability provides faster recovery, since failover is a breeze. 
-Consider disabling multi AZ when faster recovery is unnecessary which is the case for most test environments.
-Running the test RDS instance in single AZ availability will cut its compute and storage cost in half.
+Having your RDS instance run with multi-AZ availability provides faster recovery, since failover is a breeze. 
+Consider disabling multi-AZ when faster recovery is unnecessary which is the case for most test environments.
+Running the test RDS instance in single-AZ availability will cut its compute and storage cost in half.
 
 ### real life use case
-The RDS instances in our test environment run in single AZ availability because the impact of having an RDS instance fail is limited.
-The MySQL RDS instance that runs in production have been deployed multi AZ as the cost of downtime is rather large. 
-Our test environment was already configured as single AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
+The RDS instances in our test environment run in single-AZ availability because the impact of having an RDS instance fail is limited.
+The MySQL RDS instance that runs in production have been deployed multi-AZ as the cost of downtime is rather large. 
+Our test environment was already configured as single-AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
 
 ## Stopping unused RDS instances versus Reserved Instances
 More costs can be saved by either stopping RDS instances during periods in which they are not used but this has to be carefully compared to reserving instances.
@@ -116,8 +118,10 @@ The cost saving is heavily class type dependent.
 
 #### Size flexibility
 Bear in mind that you can also make use of size flexibility for Reserved Instances.
-If you are sure about the chosen RDS instance family, such as db.m6, db.r3 or db.t4g, and the minimum instance type, such as medium, large or 2xlarge, you need, then go ahead and reserve the minimum instance type of that specific db instance family already.
-The size flexibility will allow two reserved RDS instances to count as one reserved RDS instance of one instance type higher.
+A reserved database instance of a certain size, can be applied to 50% of the usage of a database instance that is one size bigger.
+A reserved single-AZ instance can be applied to 50% of the usage of a multi-AZ database instance of the same size.
+If you are sure about the RDS instance family ( `db.m6`, `db.r3`,`db.t4g`,...) and the minimum instance type (`medium`, `large`,`2xlarge`,...) to cover the baseline load, you can reserve the db instance already.
+If at some point in the future the load increases, you can add reserved instances to cover the new baseline load.
 ### Which option should I pick?
 Pick the option with the largest cost saving.
 If both are approximately equal consider whether you are sure that you will need the RDS instance for the reserved amount of time.
@@ -128,29 +132,28 @@ Stopping and starting the RDS instance in our production environment because the
 We did not stop the MySQL RDS instances in our test environment, although this probably would have been more cost-effective.
 Our sprint backlog is already filled to the brim, so it would have probably taken a couple of weeks in order to work on stopping and starting RDS instances.
 Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
-In our particular case we were running multiple instance types of the RDS t4g class.
+In our particular case we were running multiple instance types of the RDS `t4g` class.
 We cannot confidently predict the workload on our database for years to come. Hence, reserving RDS instances for one year with partial upfront payment seems the best option for now.
 This leads to a cost reduction of approximately 37% (see Reserved Instances on https://aws.amazon.com/rds/mysql/pricing/).
 
 
-Regarding size flexibility. Once the RDS instance class has been decided, you should reserve the minimum expected baseline.
+Regarding size flexibility. Once the RDS instance class has been decided upon, you should reserve the minimum expected baseline.
 In our AWS account there are 3 test MySQL RDS instances and 3 production MySQL instances.
 All of them are primarily used during extended business hours but the loads differ.
-Since all access patterns are similar the burstable database instance family `db.t4g` was chosen.
-The currently experienced baseline load for a test environment was optimally covered by one t4g.medium (Single AZ).
-The currently experienced baseline load over the three production environments could be covered by 1 t4g.medium, 1 t4g.large and 1 t4g.xlarge. All of the production environment were set up in multi AZ.
+Since all access patterns are similar the burstable database instance family `db.t4g` is chosen.
+The currently experienced baseline load for a test environment is covered by one `t4g.medium` (single-AZ).
+The currently experienced baseline load over the three production environments is covered by 1 `t4g.medium`, 1 `t4g.large` and 1 `t4g.xlarge`. 
+All the production environments utilize a multi-AZ configuration.
 
-By making use of size flexibility it is not that difficult to calculate the amount of t4g.medium single AZ instances necessary.
-You can calculate the current baseline summing up all db instance equivalent baselines.
-t4g.2xlarge (multi AZ) = 2 t4g.xlarge (multi AZ) = 2. (2 t4g.large (multi AZ)) = 4. ( 2 t4g.medium (multi AZ)) = 8. ( 2 t4g.medium (single AZ)) = 16 t4g.medium (single AZ)
-So one t4g.2xlarge multi AZ instance can be reserved by reserving 16 single AZ t4g.medium instances.
-An instance of which the size is equivalent to 2 instances of one size smaller.
-A multi AZ instance is equivalent to 2 single AZ instances of the same size.
-
+By making use of size flexibility it is not that difficult to calculate the amount of t4g.medium single-AZ instances necessary.
+You can calculate the current baseline summing up all database instance equivalent baselines.
+1 `t4g.xlarge` (multi-AZ) = 2 `t4g.large` (multi-AZ) = 2 ( 2 `t4g.medium` (multi-AZ)) = 4. ( 2 `t4g.medium` (single AZ)) = 8 `t4g.medium` (single AZ)
+So one `t4g.xlarge` multi-AZ instance can be reserved by reserving 8 single-AZ `t4g.medium` instances.
+Similar calculations show that reserving 14 single-AZ `t4g.medium` instances is cost optimal for the production environment, while 3 single-AZ `t4g.medium` instances is cost optimal for the test environment.
 
 ## Allocated storage
 There are multiple ways to save costs on allocated storage.
-### Choose the correct storage types
+### Choosing the correct storage types
 There are two storage types for RDS instances:
 - GP2
 - IO1
@@ -160,7 +163,7 @@ GP2 is great for variable workloads and should be your default option.
 Only Consider IO1 when you need more IOPS than can be provided by GP2 or when there is a requirement on your database to always have some provisioned IOPS.
 As of now when RDS instance storage is mentioned, a GP2 database is implied.
 
-As mentioned before, you will pay for every availability zone in which the RDS instance is deployed so choosing a multi AZ RDS instance will increase your storage costs by at least by a factor of 2.
+As mentioned before, you will pay for every availability zone in which the RDS instance is deployed so choosing a multi-AZ RDS instance will increase your storage costs by at least by a factor of 2.
 ### Reducing storage size
 You can check whether most of the allocated storage of an RDS instance is used by comparing its Free Storage Space metric to its storage size.
 It is tempting to reduce the storage size to what you actually use plus some margin for safety.
@@ -192,16 +195,21 @@ and
 Since 75 IOPS is smaller than 100 IOPS, the baseline IOPS for this RDS instance will be 100 IOPS.
 ##### Storage costs
 Storage costs are a bit higher than $0.11 per Gigabyte per month, depending on the region.
-If you have a single AZ RDS instance with 1 TB of allocated GP2 storage, it will cost you a bit more than $110 per month.
-Having a multi AZ RDS instance will double the cost, since the secondary instance also has a GP2 storage of the same size attached to it.
+If you have a single-AZ RDS instance with 1 TB of allocated GP2 storage, it will cost you a bit more than $110 per month.
+Having a multi-AZ RDS instance will double the cost, since the secondary instance also has a GP2 storage of the same size attached to it.
 Look at the Free Storage Space metric for the RDS instance to see how much Storage space the RDS instance actually uses.
 It is tempting to reduce the storage size to what you actually use plus some margin for safety. But do not do that just yet.
 Make sure you have enough IOPS capacity after storage size reduction!
 
 ##### Reducing the storage size while taking IOPS into account
-If IOPS does not pose a problem, then decrease the storage size to what you actually use plus some margin for safety. Autoscaling storage or rather auto increasing storage is possible, but is out of scope for this post.
+If IOPS does not pose a problem, then decrease the storage size to what you actually use plus some margin for safety.
+Autoscaling storage or rather auto increasing storage is possible, but is out of scope for this post.
 If IOPS is the bottleneck, then calculate the storage size that replenishes the BurstBalance of the RDS instance fast enough, so it never gets depleted.
+Here is a spreadsheet (https://docs.google.com/spreadsheets/d/e/2PACX-1vRjkTJQIaRGKEuXjo4Bn3imwopOW_1Xx08jeLz8Xl-BYxyXC3gSlugFsRBrtKXTOwngI_nxq5hq_HZ6/pub?output=ods) that you can use to import your current WriteIOPS and ReadIOPS metrics.
+Then you can play around with the estimated IOPS to see the effect on the BurstBalance credits.
 
+##### Real life use case
+The ReadIOPS and WriteIOPS in the spreadsheet are the production ReadIOPS and WriteIOPS
 
 
 ## application optimization
