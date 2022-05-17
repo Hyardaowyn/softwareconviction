@@ -98,14 +98,14 @@ Having your RDS instance run with multi-AZ availability provides faster recovery
 Consider disabling multi-AZ when faster recovery is unnecessary which is the case for most test environments.
 Running the test RDS instance in single-AZ availability will cut its compute and storage cost in half.
 
-### real life use case
+### Real life use case
 The RDS instances in our test environment run in single-AZ availability because the impact of having an RDS instance fail is limited.
 The MySQL RDS instance that runs in production have been deployed multi-AZ as the cost of downtime is rather large. 
 Our test environment was already configured as single-AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
 
 ## Stopping unused RDS instances versus Reserved Instances
 More costs can be saved by either stopping RDS instances during periods in which they are not used but this has to be carefully compared to reserving instances.
-### unused RDS instances
+### Unused RDS instances
 Look at the usage patterns of your RDS instances.
 If the database is only used during business hours or extended business hours, consider stopping the RDS instance when it is not used to save on compute costs.
 This can be done by triggering an AWS Lambda Function at certain times.
