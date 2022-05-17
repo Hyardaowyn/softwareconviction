@@ -258,10 +258,10 @@ Storing fewer data, or using less IOPS give you the opportunity to reduce the GP
 
 ## Database logs
 Consider not logging the database logs to cloudwatch to reduce Cloudwatch costs.
-### real-life use case
+### Real-life use case
 Our logs are still sent to cloudwatch, since the cost is minimal compared to compute and storage, and it helps for troubleshooting.
 
-#Cost savings summary
+# Cost savings summary
 compute costs reduced by 58.8% by rightsizing type and instance size.
 compute costs again reduced by 37% by reserving instances for one year.
 storage costs reduced by 71.8% by rightsizing the volume while taking BurstBalance into account.
