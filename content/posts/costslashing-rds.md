@@ -1,6 +1,7 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
 date: 2022-05-03T18:28:22+02:00
+authors: ["Henry Myster"]
 draft: false
 ---
 
@@ -129,8 +130,8 @@ If both are approximately equal consider whether you are sure that you will need
 If there is any doubt, go for stopping and starting instances during periods in which they are not used.
 
 ### Real life use case
-Stopping and starting the RDS instance in our production environment because the database is used most of the time.
-We did not stop the MySQL RDS instances in our test environment, although this probably would have been more cost-effective.
+Stopping and starting the RDS instance in our production environment is not something we do because the database is used most of the time.
+We did not stop the MySQL RDS instances in our test environment either, although this probably would have been more cost-effective.
 Our sprint backlog is already filled to the brim, so it would have probably taken a couple of weeks in order to work on stopping and starting RDS instances.
 Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
 In our particular case we were running multiple instance types of the RDS `t4g` class.
