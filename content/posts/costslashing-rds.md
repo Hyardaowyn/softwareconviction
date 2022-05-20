@@ -8,7 +8,7 @@ draft: false
 # A step by step guide on how to reduce costs for an RDS instance
 Some obvious and some lesser-known cost savings for AWS RDS and the order in which to apply them are discussed.
 Some cost savings come with deliberate tradeoffs and depend on the context in which the RDS instance operates.
-To make it more concrete these careful considerations are applied on a real life use case; A MySQL RDS instance.
+These careful considerations are applied on a real life use case; A MySQL RDS instance.
 
 Finally, an overview of all the cost savings is presented for the MySQL RDS instance.
 
@@ -19,54 +19,65 @@ Amazon Aurora, MySQL, MariaDB, Oracle, SQL Server, and PostgreSQL are the curren
 This service should be considered if you want to have a relational database without wanting to deal with maintenance, durability, disaster recovery and high availability.
 
 ## Real life use case RDS Instance
-To make things more concrete a real life use case is considered.
-A MySQL RDS instance. The instance is used 6 days a week and experiences its highest load during extended business hours.
+A MySQL RDS instance in a production environment is used as an example of what savings can be applied.
+The instance is used 6 days a week and experiences its highest load during extended business hours.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_Typical_Daily_CPUUtilization.png)
 Housekeeping is performed every night which explains the small peak around 1:00AM.
 
 # Cost Savings
 Using AWS RDS can become costly rather quickly. 
 Some options in the RDS configuration should be a deliberate choice tailored to the context in which the instance operates.
-An oversight during setup or a failure to reevaluate a configuration can increase your RDS bill by multiple factors of 2.
+An oversight during setup or a failure to reevaluate a configuration can make your AWS cost exponentially higher than it should be.
 
 ## AWS RDS
 The best way to reduce AWS RDS costs is by not using AWS RDS at all!
 EC2 is perfectly suited to host a relational database and will cost you approximately 50% less.
-If you do not care much about high availability, disaster recovery, security or performance then this is definitely the way to go.
+If you do not care about high availability, disaster recovery, security or performance then this is definitely the way to go.
 Most businesses however do care, so I would not consider this a viable option anymore in 2022 except for maybe on a hobby project.
 
 ## Database instance class, type and size
-When starting with AWS RDS consider which instance class you want to use.
-Consider the burstable performance class (the t instances), when you have a non-constant workload over 24 hours.
-For example when the database is almost exclusively used during the day.
-Consider the memory optimized class (R,x and z instances) when you have a read heavy database workload.
+When starting with AWS RDS consider which instance class you want to use.  
+Consider the burstable performance class (the t-instance types), when you have a non-constant workload over 24 hours,
+such as when the database is almost exclusively used during the day.  
+Consider the memory optimized class (R,x and z instance types) when you have a read heavy database workload.  
 Consider the general purpose class for other workloads.
 
-## Database instance class type
-Choosing the right database instance class type and size is paramount in reducing AWS RDS costs.
-If you are not quite sure how much Memory or CPU the instance will need it is best to over-provision a little and start with a rather large instance class type.
-Once a utilization baseline has been established, you can consider scaling down the instance class type vertically.
-To scale down the instance class type confidently, check both CPU and Freeable memory metrics.
-Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance class type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance class type.
+## Database instance type
+Choosing the right database instance type and size is paramount in reducing AWS RDS costs.
+If you are not quite sure how much Memory or CPU the instance will need, it is best to over-provision a little at the start with a rather large instance type.  
+Once a utilization baseline has been established, you can consider scaling down the instance type vertically.
+
+### Scaling down instance type
+To scale down the instance type confidently, check both CPU and Freeable memory metrics.
+Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance type.
+
 The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly.
-Reducing the VCPus by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
+
+
+Reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
 This heuristic can help you estimate how much you can downscale your database instance and when you would cross the 60% CPU Utilization limit more than a couple of minutes a day.
-Changing the instance class will always lead to some downtime so schedule it properly.
+
+Remember that Changing the instance type or size will lead to some downtime, so schedule it properly.
+
 ### Real life use case
-Initially a general purpose instance (`db.m6g`) of size `2xlarge` was chosen for the relational database.
+
+Initially a general purpose instance (`db.m6g`) of size `2xlarge` was chosen as relational database.
 Since the database is primarily used during extended business hours, the instance class burstable performance (`db.t4g`) seems the most appropriate choice.
+
 #### Analyzing the metrics
 ##### CPU Utilization analysis
-A db.m6g.2xlarge instance has 8 VCPUs. As you can see on the graph, on the 21st of March, the maximum of the CPU Utilization within a 5-minute period, crosses 30% more than a couple of times.
+A `db.m6g.2xlarge` instance has 8 VCPUs. As you can see on the graph, on the 21st of March, the maximum of the CPU Utilization within a 5-minute period, crosses 30% more than a couple of times.
+
 As mentioned before, reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
+
 Scaling down vertically to 4 VCPUs is the limit since the maximum of CPU Utilization will cross the 50% barrier more than a couple of minutes a day.
-db.t4g.xlarge has 4 VCPUs, so do not go smaller than `db.t4g.xlarge`.
+`db.t4g.xlarge` has 4 VCPUs, so do not use a smaller instance type than `db.t4g.xlarge`.
 
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization_Before.png)
 ##### Freeable Memory analysis
 A `db.m6g.2xlarge` instance has `32GB` of memory. 
 As you can see on the graph, on the 21st of March there is `25GB` of `Freeable Memory` so approximately `7GB` is used.
-Therefor it is possible to estimate that `8GB` of RAM is sufficient.
+Therefore it is possible to estimate that `8GB` of RAM is sufficient.
 `db.t4g.large` has 8GB of RAM, so do not go smaller than `db.t4g.large`.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory_Before.png)
 
@@ -82,62 +93,86 @@ compute cost after scale down = $0.277 X 24 X 30 = $199.44
 A cost reduction of 58.8%.
 
 ### An additional real life use case
-At the time of writing a different MySQL RDS instance is running which ignores AWS's advice (https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/) since at peak Memory usage it only has 3% Free Memory.
-The monitoring shows that the swap Usage metric increases regularly, so scaling up vertically seems reasonable.
-However, there is no visible impact on write latency, read latency nor on CPU Utilization.
-At this point it is a calculated risk which reduces costs significantly.
-Keep in mind that downscaling one instance size reduces the cost by a factor 2. 
-Choosing to not scale up one instance size in this case, saves a considerable amount of money.
-It is very much recommended having some CloudWatch alarms in place, should the read or write latency exceed a certain arbitrary threshold.
+At the time of writing a different MySQL RDS instance is running in production.
+
+At peak Memory usage it only has 3% Free Memory, which is less than the 5% that [AWS advises](https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/).
+The monitoring shows that the swap Usage metric increases regularly.
+The write latency, read latency, or CPU Utilization is not impacted at those times.
+
+Scaling up vertically seems reasonable when looking at the swap usage metric.
+However, since there is no impact on the main performance parameters of the database, scaling up vertically was deemed not necessary.
+
+At this point it is a calculated risk which reduces compute costs significantly.
+Keep in mind that scaling up by one instance size increases compute cost by a factor 2.
+
+#### Alarms
+
+It is very much recommended having some CloudWatch alarms in place.
+You want to be aware of when the read or write latency exceeds a certain threshold.
+Especially when it has a considerable impact for end users.
 
 ## Multi-AZ 
-RDS instances can be run with multi-AZ availability. 
-Choose this option if your database needs to be high available.
-It will protect you from hardware failure and from an availability zone going down as a whole.
-Having your RDS instance run with multi-AZ availability provides faster recovery, since failover is a breeze. 
-Consider disabling multi-AZ when faster recovery is unnecessary which is the case for most test environments.
-Running the test RDS instance in single-AZ availability will cut its compute and storage cost in half.
+RDS instances can be run as a multi-AZ deployment. 
+Choose this option if your database needs to be high available and when you have low RTO and very low RPO.
+It will provide [better recovery](https://aws.amazon.com/blogs/database/amazon-rds-under-the-hood-single-az-instance-recovery/) from non-recoverable instance failures and an availability zone going down, compared to single-AZ instances.
+
+Consider disabling multi-AZ when fast automatic recovery is not necessary, which is the case for most test environments.  
+Running the test RDS instance in single-AZ deployment will cut its compute and storage cost in half.
 
 ### Real life use case
-The RDS instances in our test environment run in single-AZ availability because the impact of having an RDS instance fail is limited.
-The MySQL RDS instance that runs in production have been deployed multi-AZ as the cost of downtime is rather large. 
-Our test environment was already configured as single-AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
+
+The RDS instances in the test environment run in single-AZ deployment, because the impact of having a non-recoverable RDS instance failure is limited.  
+The MySQL RDS instances that run in production have been deployed multi-AZ, as the cost of downtime is rather large.  
+The test environment was already configured as single-AZ and the multi-AZ configuration of the MySQL RDS instance was not changed, so no costs were saved.
 
 ## Stopping unused RDS instances versus Reserved Instances
-More costs can be saved by either stopping RDS instances during periods in which they are not used but this has to be carefully compared to reserving instances.
-### Unused RDS instances
-Look at the usage patterns of your RDS instances.
-If the database is only used during business hours or extended business hours, consider stopping the RDS instance when it is not used to save on compute costs.
-This can be done by triggering an AWS Lambda Function at certain times.
-AWS will still charge you for the allocated storage of the RDS instance, but you will not have to pay for the compute part of the RDS instance costs.
-If your RDS instances is only used 5 days a week from 9AM until 5 PM then you can stop the RDS instance at 5PM and start it again at 9AM on weekdays.
-The RDS instance will only be used 5*8 hours a week, which is about 24% of the time, so you can save approximately 76% on RDS compute costs.
 
+Compute costs can be reduced by reserving instances or by stopping RDS instances during periods in which they are not used.
+You do not pay for the compute cost when an RDS instance is stopped, so compare this cost reduction carefully with reserving instances.
+
+Also keep in mind that any stopped RDS instance will be restarted automatically after 7 days.
+
+### Stopping Unused RDS instances
+
+Analyze the usage patterns of your RDS instances.
+If the database is only used during business hours or extended business hours, consider stopping the RDS instance in periods where it is not used to save on compute costs.
+AWS will still charge you for the allocated storage of the RDS instance, but you will not have to pay for the compute part of the RDS instance costs.
+
+If your RDS instances is only used 5 days a week from 9AM until 5PM then you can stop the RDS instance at 5PM and start it again at 9AM on weekdays.
+The RDS instance will only be used 40 hours a week, which is about 24% of the time, so you can save approximately 76% on RDS compute costs.
+
+You can use an eventbridge rule that runs on a schedule to triggers a Lambda Function which can stop and start an RDS instance.
 ### Reserved instances
 Once you have decided upon which instance class to use, you should look into reserved instances for AWS RDS.
 Reserved instances allows you to save up to almost 70% of your costs compared to the on-demand rate.
-The cost saving is heavily class type dependent. 
+The cost saving is heavily instance type dependent. 
 
 #### Size flexibility
+
 Bear in mind that you can also make use of size flexibility for Reserved Instances.
-A reserved database instance of a certain size, can be applied to 50% of the usage of a database instance that is one size bigger.
+A reserved database instance of a certain size, can be applied to 50% of the usage of a database instance that is one size bigger.  
 A reserved single-AZ instance can be applied to 50% of the usage of a multi-AZ database instance of the same size.
+
 If you are sure about the RDS instance family ( `db.m6`, `db.r3`,`db.t4g`,...) and the minimum instance type (`medium`, `large`,`2xlarge`,...) to cover the baseline load, you can reserve the db instance already.
 If at some point in the future the load increases, you can add reserved instances to cover the new baseline load.
+
 ### Which option should I pick?
+
 Pick the option with the largest cost saving.
 If both are approximately equal consider whether you are sure that you will need the RDS instance for the reserved amount of time.
 If there is any doubt, go for stopping and starting instances during periods in which they are not used.
 
 ### Real life use case
-Stopping and starting the RDS instance in our production environment is not something we do because the database is used most of the time.
-We did not stop the MySQL RDS instances in our test environment either, although this probably would have been more cost-effective.
-Our sprint backlog is already filled to the brim, so it would have probably taken a couple of weeks in order to work on stopping and starting RDS instances.
-Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
-In our particular case we were running multiple instance types of the RDS `t4g` class.
-We cannot confidently predict the workload on our database for years to come. Hence, reserving RDS instances for one year with partial upfront payment seems the best option for now.
-This leads to a cost reduction of approximately 37% (see Reserved Instances on https://aws.amazon.com/rds/mysql/pricing/).
+RDS instances in the production environment are not started and stopped because the database is used most of the time.
+Starting and stopping RDS instances was not chosen for the test environment either.
 
+Our sprint backlog is already filled to the brim, so it probably would have taken another couple of weeks before we could start working on it.
+Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
+
+It is difficult to predict the workload on the production database for years to come.
+Hence, reserving RDS instances for one year with partial upfront payment seems the best option for now.
+Reserving the `t4g` instances in `eu-west-1` leads to a cost reduction of approximately 37%, see [Reserved Instances](https://aws.amazon.com/rds/mysql/pricing/).
+Although strictly speaking, stopping and starting instances would have probably been cheaper.
 
 Regarding size flexibility. Once the RDS instance class has been decided upon, you should reserve the minimum expected baseline.
 In our AWS account there are 3 test MySQL RDS instances and 3 production MySQL instances.
@@ -181,7 +216,7 @@ RDS instances backed by a GP2 EBS Volume IO1 will give you a provisioned amount 
 ##### IOPS baseline
 For provisioned IOPS i.e. IO1 the baseline is the amount of provisioned IOPS.
 For GP2 you can calculate the baseline IOPS based on the allocated storage size in GB:
-GP2 baseline IOPS = maximum of 3 IOPS/GB * storage size in GB and 100 IOPS = MAX(3*storageSizeInGB,100) IOPS
+GP2 baseline IOPS = maximum of 3 IOPS/GB * storage size in GB and 100 IOPS = MAX(3*storageSizeInGB, 100) IOPS
 The minimum amount of IOPS for a GP2 volume is thus 100 IOPS.
 
 Most RDS instances have a variable workload so that GP2 is the better candidate.
