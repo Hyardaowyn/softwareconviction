@@ -47,7 +47,7 @@ Choosing the right database instance class type and size is paramount in reducin
 If you are not quite sure how much Memory or CPU the instance will need it is best to over-provision a little and start with a rather large instance class type.
 Once a utilization baseline has been established, you can consider scaling down the instance class type vertically.
 To scale down the instance class type confidently, check both CPU and Freeable memory metrics.
-Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance class type memory minus freeable memory) is more than 95% of the memory of the targeted scaled down database instance class type.
+Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance class type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance class type.
 The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly.
 Reducing the VCPus by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
 This heuristic can help you estimate how much you can downscale your database instance and when you would cross the 60% CPU Utilization limit more than a couple of minutes a day.
