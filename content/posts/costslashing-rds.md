@@ -102,7 +102,7 @@ The effect on the `Freeable Memory` and the maximum of the `CPU Utilization` wit
 
 #### Cost reduction
 
-Initial compute cost = $0.672 X 24 X 30 = $483.84.
+Initial compute cost = $0.672 X 24 X 30 = $483.84.  
 compute cost after scale down = $0.277 X 24 X 30 = $199.44
 A cost reduction of 58.8%.
 
