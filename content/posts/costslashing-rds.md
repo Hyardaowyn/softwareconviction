@@ -56,7 +56,7 @@ Once a utilization baseline has been established, you can consider scaling down 
 ### Scaling down instance type
 
 To scale down the instance type confidently, check both `CPUUtilization` and `FreeableMemory` metrics.
-Scale down when the maximum of the `CPUUtilization` metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance type.
+Scale down when the maximum of the `CPUUtilization` metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 92.5% of the memory of the targeted scaled down database instance type.
 
 The `FreeableMemory` metric is not always a good performance predictor.
 Consider using enhanced monitoring's Free Memory metric when the `FreeableMemory` drops below 15% of the configured memory of the RDS instance or when the `Swap Usage` metric increases regularly.
