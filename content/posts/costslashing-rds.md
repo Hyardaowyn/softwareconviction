@@ -75,7 +75,9 @@ Scaling down vertically to 4 VCPUs is the limit since the maximum of CPU Utiliza
 `db.t4g.xlarge` has 4 VCPUs, so do not use a smaller instance type than `db.t4g.xlarge`.
 
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization_Before.png)
+
 ##### Freeable Memory analysis
+
 A `db.m6g.2xlarge` instance has `32GB` of memory. 
 As you can see on the graph, on the 21st of March there is `25GB` of `Freeable Memory` so approximately `7GB` is used.
 Therefore, it is possible to estimate that `8GB` of RAM is sufficient.
@@ -83,17 +85,20 @@ Therefore, it is possible to estimate that `8GB` of RAM is sufficient.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory_Before.png)
 
 #### Conclusions
+
 Since CPU seems to be the bottleneck, the instance type was changed to `t4g.xlarge` on the 23rd of March.
 The effect on the `Freeable Memory` and the maximum of the `CPU Utilization` within a 5-minute period, is shown in the graphs below.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_CPUUtilization.png)
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory.png)
 
 #### Cost reduction
+
 Initial compute cost = $0.672 X 24 X 30 = $483.84.
 compute cost after scale down = $0.277 X 24 X 30 = $199.44
 A cost reduction of 58.8%.
 
 ### An additional real life use case
+
 At the time of writing a different MySQL RDS instance is running in production.
 
 Enhanced monitoring shows that it only has 2% Free Memory, which is less than the 5% that [AWS advises](https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/).
@@ -306,6 +311,7 @@ Follow these steps to make the spreadsheet use your historical data:
 The `ReadIOPS` and `WriteIOPS` in the spreadsheet are the production `ReadIOPS` and `WriteIOPS` of the MySQL instance in a limited timeframe.
 
 ##### Interpreting the data in the spreadsheet by making use of the graph
+
 On the 15th of May the hypothetical `BurstBalance` was at its lowest point in the selected time interval.
 ![Graph of projected lowest burst balance](/MySQL_RDS_Instance_BurstBalanceLowestPointInGraph.png)
 If only 350 IOPS credits are added to the `BurstBalance` credits every second, then there would be no credits left around 22:00.
