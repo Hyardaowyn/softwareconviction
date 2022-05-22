@@ -1,6 +1,6 @@
 ---
 title: "Slashing AWS RDS costs for a database instance in an enterprise context"
-date: 2022-05-03T18:28:22+02:00
+date: 2022-05-22T12:28:22+02:00
 authors: ["Geert Van Wauwe"]
 draft: false
 ---
@@ -13,29 +13,34 @@ These careful considerations are applied on a real life use case; A MySQL RDS in
 Finally, an overview of all the cost savings is presented for the MySQL RDS instance.
 
 # What is AWS RDS
+
 AWS RDS is AWS's relational database service.
 It supports proprietary and open source database engines.
 Amazon Aurora, MySQL, MariaDB, Oracle, SQL Server, and PostgreSQL are the current options to choose from.
 This service should be considered if you want to have a relational database without wanting to deal with maintenance, durability, disaster recovery and high availability.
 
 ## Real life use case RDS Instance
+
 A MySQL RDS instance in a production environment is used as an example of what savings can be applied.
 The instance is used 6 days a week and experiences its highest load during extended business hours.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_Typical_Daily_CPUUtilization.png)
 Housekeeping is performed every night which explains the small peak around 1:00AM.
 
 # Cost Savings
+
 Using AWS RDS can become costly rather quickly. 
 Some options in the RDS configuration should be a deliberate choice tailored to the context in which the instance operates.
 An oversight during setup or a failure to reevaluate a configuration can make your AWS cost exponentially higher than it should be.
 
 ## AWS RDS
+
 The best way to reduce AWS RDS costs is by not using AWS RDS at all!
 EC2 is perfectly suited to host a relational database and will cost you approximately 50% less.
 If you do not care about high availability, disaster recovery, security or performance then this is definitely the way to go.
 Most businesses however do care, so I would not consider this a viable option anymore in 2022 except for maybe on a hobby project.
 
 ## Database instance class, type and size
+
 When starting with AWS RDS consider which instance class you want to use.  
 Consider the burstable performance class (the t-instance types), when you have a non-constant workload over 24 hours,
 such as when the database is almost exclusively used during the day.  
@@ -43,11 +48,13 @@ Consider the memory optimized class (R,x and z instance types) when you have a r
 Consider the general purpose class for other workloads.
 
 ## Database instance type
+
 Choosing the right database instance type and size is paramount in reducing AWS RDS costs.
 If you are not quite sure how much Memory or CPU the instance will need, it is best to over-provision at the start with a rather large instance type.  
 Once a utilization baseline has been established, you can consider scaling down the instance type vertically.
 
 ### Scaling down instance type
+
 To scale down the instance type confidently, check both `CPUUtilization` and `FreeableMemory` metrics.
 Scale down when the maximum of the `CPUUtilization` metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance type.
 
@@ -66,7 +73,9 @@ Initially a general purpose instance (`db.m6g`) of size `2xlarge` was chosen as 
 Since the database is primarily used during extended business hours, the instance class burstable performance (`db.t4g`) seems the most appropriate choice.
 
 #### Analyzing the metrics
+
 ##### CPU Utilization analysis
+
 A `db.m6g.2xlarge` instance has 8 VCPUs. As you can see on the graph, on the 21st of March, the maximum of the CPU Utilization within a 5-minute period, crosses 30% more than a couple of times.
 
 As mentioned before, reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
@@ -120,6 +129,7 @@ You will want to be aware of when the read or write latency exceeds a certain th
 Especially when it has a noticeable impact on end users.
 
 ## Multi-AZ 
+
 RDS instances can be run as a multi-AZ deployment. 
 Choose this option if your database needs to be high available and when you have a low RTO and a very low RPO.
 It will provide [better recovery](https://aws.amazon.com/blogs/database/amazon-rds-under-the-hood-single-az-instance-recovery/) from **non-recoverable** instance failures or when an availability zone goes down, compared to single-AZ instances.
@@ -173,6 +183,7 @@ If both are approximately equal consider whether you are sure that you will need
 If there is any doubt, go for stopping and starting instances during periods in which they are not used.
 
 ### Real life use case
+
 RDS instances in the production environment are not started and stopped because the database is used most of the time.
 Starting and stopping RDS instances was not chosen for the test environment either.
 
@@ -222,10 +233,11 @@ As mentioned before, you will pay for every availability zone in which the RDS i
 ### Reducing storage size
 
 You can check whether most of the allocated storage of an RDS instance is used by comparing its `FreeStorageSpace` metric to its storage size.
-It is tempting to reduce the storage size to what you actually use plus some margin for safety.
+It is tempting to reduce the storage size to what you actually use plus some margin for performance and some additional margin for safety.
 Unfortunately it is not that simple.
 The allocated storage of an RDS is directly proportional to its IOPS.
 So you will have to make sure that the IOPS capacity is sufficient after storage size reduction!
+
 
 #### IOPS
 
@@ -246,6 +258,7 @@ Most RDS instances have a variable workload so that GP2 is the better candidate.
 In what follows only GP2 volumes are considered.
 
 #####  An example on how to calculate the IOPS baseline for a GP2 backed RDS instance
+
 This is relevant for small volumes as shown by the following example:
 Given an RDS instance with 25 GB of allocated storage, the calculated baseline IOPS is the maximum of:  
 3 IOPS/GB * storage size in GB = 3 IOPS/GB * 25 GB = 75 IOPS  
@@ -297,7 +310,7 @@ Follow these steps to make the spreadsheet use your historical data:
 9) In the Import File configuration check `Convert text to numbers, dates and formulas`.
 10) Click import data in the Import File configuration dialog box.
 11) Remove the recently added D column again.
-12) Expand the formulas for column D,E,F,G,H and I, by going to row 2021 and double-clicking the bottom right corner of each last filled cell.
+12) Expand the formulas for column D,E,F,G,H and I, by going to row 3666 and double-clicking the bottom right corner of each last filled cell.
 13) Go to the `chart` sheet and edit the range of the chart to `data!A6:I{lastrow}` where `{lastrow}` is the last row number of your data.
 14) In the `edit chart` dialog, remove the Series you do not need such as `data!B6:I{lastrow}` and `data!C6:I{lastrow}`.
 15) Now you can start playing around with the estimated IOPS located in the third row.
@@ -305,6 +318,14 @@ Follow these steps to make the spreadsheet use your historical data:
 17) Find an IOPS number such that the projected `BurstBalance` is comfortable enough at all times for your situation.
 18) Ideally the `BurstBalance` should never reach 0, since then the performance would be impacted heavily.
 19) Divide the IOPS number by 3 to find the GP2 storage size you minimally need to sustain the burst necessary for your database access patterns.
+
+#### The cost optimized storage size without performance degradation
+
+The cost optimized storage size without performance degradation for an RDS instance is the maximum of:  
+1) the currently used storage size plus 17.5% as recommended by [the RDS performance guidelines](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/MonitoringOverview.html) and then some additional margin for safety.
+2) the storage size as estimated by using the above-mentioned spreadsheet that takes the historical IOPS into account which already contains some margin for safety.
+
+Configure [Amazon RDS storage autoscaling](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_PIOPS.StorageTypes.html#USER_PIOPS.Autoscaling) if you expect the storage size to grow.
 
 #### Real life use case
 
