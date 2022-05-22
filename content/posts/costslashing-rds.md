@@ -44,14 +44,15 @@ Consider the general purpose class for other workloads.
 
 ## Database instance type
 Choosing the right database instance type and size is paramount in reducing AWS RDS costs.
-If you are not quite sure how much Memory or CPU the instance will need, it is best to over-provision a little at the start with a rather large instance type.  
+If you are not quite sure how much Memory or CPU the instance will need, it is best to over-provision at the start with a rather large instance type.  
 Once a utilization baseline has been established, you can consider scaling down the instance type vertically.
 
 ### Scaling down instance type
-To scale down the instance type confidently, check both CPU and Freeable memory metrics.
-Scale down when the maximum of the CPU Utilization metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance type.
+To scale down the instance type confidently, check both `CPUUtilization` and `FreeableMemory` metrics.
+Scale down when the maximum of the `CPUUtilization` metric is below 50% for more than 99.9% of the time and when the currently used memory (instance type memory minus freeable memory) is less than 95% of the memory of the targeted scaled down database instance type.
 
-The Freeable Memory metric is not always accurate, consider using enhanced monitoring's Free Memory metric when The Freeable Memory drops below 15% of the configured memory of the RDS instance or when the Swap Usage metric increases regularly.
+The `FreeableMemory` metric is not always a good performance predictor.
+Consider using enhanced monitoring's Free Memory metric when the `FreeableMemory` drops below 15% of the configured memory of the RDS instance or when the `Swap Usage` metric increases regularly.
 
 
 Reducing the VCPUs by a factor of 2, roughly increases the CPUUtilization percentage by a factor of 2. 
@@ -77,7 +78,7 @@ Scaling down vertically to 4 VCPUs is the limit since the maximum of CPU Utiliza
 ##### Freeable Memory analysis
 A `db.m6g.2xlarge` instance has `32GB` of memory. 
 As you can see on the graph, on the 21st of March there is `25GB` of `Freeable Memory` so approximately `7GB` is used.
-Therefore it is possible to estimate that `8GB` of RAM is sufficient.
+Therefore, it is possible to estimate that `8GB` of RAM is sufficient.
 `db.t4g.large` has 8GB of RAM, so do not go smaller than `db.t4g.large`.
 ![MySQL RDS CPU Utilization](/MySQL_RDS_Instance_FreeableMemory_Before.png)
 
@@ -95,26 +96,28 @@ A cost reduction of 58.8%.
 ### An additional real life use case
 At the time of writing a different MySQL RDS instance is running in production.
 
-At peak Memory usage it only has 3% Free Memory, which is less than the 5% that [AWS advises](https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/).
-The monitoring shows that the swap Usage metric increases regularly.
+Enhanced monitoring shows that it only has 2% Free Memory, which is less than the 5% that [AWS advises](https://aws.amazon.com/premiumsupport/knowledge-center/low-freeable-memory-rds-mysql-mariadb/).
+![MySQL RDS Free memory](/MySQL_RDS_Instance_FreeMemory.png)
+The monitoring shows that the `SwapUsage` metric is not zero.
+![MySQL RDS Swap usage](/MySQL_RDS_Instance_SwapUsage.png)
 The write latency, read latency, or CPU Utilization is not impacted at those times.
-
-Scaling up vertically seems reasonable when looking at the swap usage metric.
+![MySQL RDS Swap usage](/MySQL_RDS_Instance_ReadAndWriteLatency.png)
+Scaling up vertically seems reasonable when looking at the `SwapUsage` metric and enhanced monitoring's free memory.
 However, since there is no impact on the main performance parameters of the database, scaling up vertically was deemed not necessary.
 
 At this point it is a calculated risk which reduces compute costs significantly.
-Keep in mind that scaling up by one instance size increases compute cost by a factor 2.
+Keep in mind that scaling up by one instance size increases compute cost by a factor of 2.
 
 #### Alarms
 
-It is very much recommended having some CloudWatch alarms in place.
-You want to be aware of when the read or write latency exceeds a certain threshold.
-Especially when it has a considerable impact for end users.
+It is strongly recommended having some CloudWatch alarms in place.
+You will want to be aware of when the read or write latency exceeds a certain threshold or when the CPU utilization reaches 100% regularly.
+Especially when it has a noticeable impact on end users.
 
 ## Multi-AZ 
 RDS instances can be run as a multi-AZ deployment. 
-Choose this option if your database needs to be high available and when you have low RTO and very low RPO.
-It will provide [better recovery](https://aws.amazon.com/blogs/database/amazon-rds-under-the-hood-single-az-instance-recovery/) from non-recoverable instance failures and an availability zone going down, compared to single-AZ instances.
+Choose this option if your database needs to be high available and when you have a low RTO and a very low RPO.
+It will provide [better recovery](https://aws.amazon.com/blogs/database/amazon-rds-under-the-hood-single-az-instance-recovery/) from **non-recoverable** instance failures or when an availability zone goes down, compared to single-AZ instances.
 
 Consider disabling multi-AZ when fast automatic recovery is not necessary, which is the case for most test environments.  
 Running the test RDS instance in single-AZ deployment will cut its compute and storage cost in half.
@@ -142,7 +145,9 @@ If your RDS instances is only used 5 days a week from 9AM until 5PM then you can
 The RDS instance will only be used 40 hours a week, which is about 24% of the time, so you can save approximately 76% on RDS compute costs.
 
 You can use an eventbridge rule that runs on a schedule to triggers a Lambda Function which can stop and start an RDS instance.
+
 ### Reserved instances
+
 Once you have decided upon which instance class to use, you should look into reserved instances for AWS RDS.
 Reserved instances allows you to save up to almost 70% of your costs compared to the on-demand rate.
 The cost saving is heavily instance type dependent. 
@@ -166,8 +171,8 @@ If there is any doubt, go for stopping and starting instances during periods in 
 RDS instances in the production environment are not started and stopped because the database is used most of the time.
 Starting and stopping RDS instances was not chosen for the test environment either.
 
-Our sprint backlog is already filled to the brim, so it probably would have taken another couple of weeks before we could start working on it.
-Reserving the instances is just a couple of clicks, so we decided to reserve our production and test instances for one year.
+The product backlog is already filled to the brim, so it probably would have taken another couple of weeks before we could start working on it.
+Reserving the instances is just a couple of clicks, so reserving production and test instances for one year seemed cost optimal given the backlog.
 
 It is difficult to predict the workload on the production database for years to come.
 Hence, reserving RDS instances for one year with partial upfront payment seems the best option for now.
@@ -178,19 +183,26 @@ Regarding size flexibility. Once the RDS instance class has been decided upon, y
 In our AWS account there are 3 test MySQL RDS instances and 3 production MySQL instances.
 All of them are primarily used during extended business hours but the loads differ.
 Since all access patterns are similar the burstable database instance family `db.t4g` is chosen.
+
 The currently experienced baseline load for a test environment is covered by one `t4g.medium` (single-AZ).
 The currently experienced baseline load over the three production environments is covered by 1 `t4g.medium`, 1 `t4g.large` and 1 `t4g.xlarge`. 
 All the production environments utilize a multi-AZ configuration.
 
-By making use of size flexibility it is not that difficult to calculate the amount of t4g.medium single-AZ instances necessary.
-You can calculate the current baseline summing up all database instance equivalent baselines.
-1 `t4g.xlarge` (multi-AZ) = 2 `t4g.large` (multi-AZ) = 2 ( 2 `t4g.medium` (multi-AZ)) = 4. ( 2 `t4g.medium` (single AZ)) = 8 `t4g.medium` (single AZ)
+By making use of size flexibility it is not that difficult to calculate the amount of `t4g.medium` single-AZ instances necessary.
+You can calculate the current baseline by adding up all database instance equivalent baselines.
+
+1 `t4g.xlarge` (multi-AZ) = 2 `t4g.large` (multi-AZ)  
+= 2 ( 2 `t4g.medium` (multi-AZ)) = 4. ( 2 `t4g.medium` (single AZ))   
+= 8 `t4g.medium` (single AZ)  
 So one `t4g.xlarge` multi-AZ instance can be reserved by reserving 8 single-AZ `t4g.medium` instances.
 Similar calculations show that reserving 14 single-AZ `t4g.medium` instances is cost optimal for the production environment, while 3 single-AZ `t4g.medium` instances is cost optimal for the test environment.
 
 ## Allocated storage
+
 There are multiple ways to save costs on allocated storage.
+
 ### Choosing the correct storage types
+
 There are two storage types for RDS instances:
 - GP2
 - IO1
@@ -201,105 +213,135 @@ Only Consider IO1 when you need more IOPS than can be provided by GP2 or when th
 As of now when RDS instance storage is mentioned, a GP2 database is implied.
 
 As mentioned before, you will pay for every availability zone in which the RDS instance is deployed so choosing a multi-AZ RDS instance will increase your storage costs by at least by a factor of 2.
+
 ### Reducing storage size
-You can check whether most of the allocated storage of an RDS instance is used by comparing its Free Storage Space metric to its storage size.
+
+You can check whether most of the allocated storage of an RDS instance is used by comparing its `FreeStorageSpace` metric to its storage size.
 It is tempting to reduce the storage size to what you actually use plus some margin for safety.
 Unfortunately it is not that simple.
 The allocated storage of an RDS is directly proportional to its IOPS.
 So you will have to make sure that the IOPS capacity is sufficient after storage size reduction!
 
 #### IOPS
+
 IOPS is a way of representing the input or output operations per second.
 RDS instances backed by a GP2 EBS Volume will give you a BurstBalance of IOPS which is basically a bucket of credits, that can be used for queries and writes to the RDS instance.
 RDS instances backed by a GP2 EBS Volume IO1 will give you a provisioned amount of IOPS.
 
 ##### IOPS baseline
+
 For provisioned IOPS i.e. IO1 the baseline is the amount of provisioned IOPS.
-For GP2 you can calculate the baseline IOPS based on the allocated storage size in GB:
-GP2 baseline IOPS = maximum of 3 IOPS/GB * storage size in GB and 100 IOPS = MAX(3*storageSizeInGB, 100) IOPS
+For GP2 you can calculate the baseline IOPS based on the allocated storage size in GB:  
+GP2 baseline IOPS = maximum of 3 IOPS/GB * storage size in GB  
+and  
+100 IOPS = MAX(3*storageSizeInGB, 100) IOPS  
 The minimum amount of IOPS for a GP2 volume is thus 100 IOPS.
 
 Most RDS instances have a variable workload so that GP2 is the better candidate.
 In what follows only GP2 volumes are considered.
 
-#### RDS instances backed by GP2 storage.
-#####  An example on how to calculate the IOPS baseline
+#####  An example on how to calculate the IOPS baseline for a GP2 backed RDS instance
 This is relevant for small volumes as shown by the following example:
-Given an RDS instance with 25 GB of allocated storage, the calculated baseline IOPS is the maximum of:
-3 IOPS/GB * storage size in GB = 3 IOPS/GB * 25 GB = 75 IOPS
-and 
-100 IOPS
+Given an RDS instance with 25 GB of allocated storage, the calculated baseline IOPS is the maximum of:  
+3 IOPS/GB * storage size in GB = 3 IOPS/GB * 25 GB = 75 IOPS  
+and  
+100 IOPS  
 Since 75 IOPS is smaller than 100 IOPS, the baseline IOPS for this RDS instance will be 100 IOPS.
-##### Storage costs
+
+#### Storage costs
+
 Storage costs are a bit higher than $0.11 per Gigabyte per month, depending on the region.
 If you have a single-AZ RDS instance with 1 TB of allocated GP2 storage, it will cost you a bit more than $110 per month.
 Having a multi-AZ RDS instance will double the cost, since the secondary instance also has a GP2 storage of the same size attached to it.
+
 Look at the Free Storage Space metric for the RDS instance to see how much Storage space the RDS instance actually uses.
 It is tempting to reduce the storage size to what you actually use plus some margin for safety. But do not do that just yet.
 Make sure you have enough IOPS capacity after storage size reduction!
 
-##### Reducing the storage size while taking IOPS into account
-If IOPS is the bottleneck, you can calculate the required allocated storage so that the BurstBalance never runs out of credits.
-This will be based on historical metrics of your database instance. In order to retrieve these metrics:
-1) Go to CloudWatch.
-2) Search for `WriteIOPS`
-3) Click on Per-Database Metrics
-4) Check the box for `WriteIOPS` for the database in question
-5) Remove the query `WriteIOPS`
-6) Search for `ReadIOPS`
-7) Check the box for `ReadIOPS` for the database in question
-8) Apply a representative timerange
-9) Select `Average` as the `Statistic` in the `Graphed Metrics` Tab
-10) Select `5 minutes` as the `Period` in the `Graphed Metrics` Tab
-11) In the upper right corner click on `Actions` 
-12) After expansion of `Actions` click on `Download as .csv`
-13) Open a google spreadsheet
-14) Open https://docs.google.com/spreadsheets/d/e/2PACX-1vSnpbVo4KZKdRghQen-FLAOwft3OKDbOHogU2hn8sDrS35dc5kRkPKfnRVEso7jMTcnQ3nA64D17A9F/pub?output=ods
-15) Add a Column between Column C and Column D. This is Important do not skip this step.
-16) Highlight the first three columns, then select import.
-17) Choose upload
-18) Select the .csv file containing the IOPS metrics.
-19) In the Import File configuration select `Replace data at selected cell` as `import location`
-20) In the Import File configuration select `Detect automatically` as `separator type
-21) In the Import File configuration check `Convert text to numbers, dates and formulas`
-22) Click import data in the Import File configuration dialog box.
-23) Remove the recently added D column again
-24) Expand the formulas for column D,E,F,G,H and I, by going to row 2021 and double-clicking the bottom right corner of each last filled cell.
-25) Go to the `chart` sheet and edit the range of the chart to `data!A6:I{lastrow}` where `{lastrow}` is the last row number of your data.
-26) In the `edit chart` dialog, remove the Series you do not need such as `data!B6:I{lastrow}` and `data!C6:I{lastrow}`
-27) Now you can start playing around with the estimated IOPS located in the third row.
-28) See what the credits would have been if this amount of IOPS was added to the BurstBalance credits every second.
-29) Find an IOPS number such that the projected BurstBalance is comfortable enough at all times for your situation.
-30) Ideally the BurstBalance should never reach 0, since then the performance would be impacted heavily
-31) Divide the IOPS number by 3 to find the GP2 storage size you minimally need to sustain the burst necessary for your database access patterns.
+#### Reducing the storage size while taking IOPS into account
 
-##### Real life use case
-The ReadIOPS and WriteIOPS in the spreadsheet are the production ReadIOPS and WriteIOPS of the MySQL instance for a limited timeframe.
-On the 16th of May the hypothetical BurstBalance was at its lowest point in the selected time interval, so zoom in on this day.
-If only 350 IOPS credits are added to the BurstBalance credits every second, then there would be no credits left around 22:00.
-This is visible since the value of the blue line is 0 on the 16th of May around 22:00.
-The yellow line representing 400 IOPS added per second, reaches its lowest point of 775000 IOPS credits on the 16th of May around 22:05.
-Since the data is collected over two weeks, there might be future periods of higher database usage.
-To make sure there are still credits left, I chose to have at least 20% of credits left in this limited time window, which is 1120000 IOPS credits.
-Since the green line representing 425 IOPS does not drop below 1120000 IOPS credits, 425 IOPS is chosen as a safe IOPS baseline to replenish the BurstBalance.
+If IOPS is the bottleneck, you can calculate the required allocated storage so that the BurstBalance never runs out of credits.
+This will be based on historical metrics of your database instance.
+In order to retrieve these metrics:
+1) Go to CloudWatch.
+2) Search for `WriteIOPS`.
+3) Click on Per-Database Metrics.
+4) Check the box for `WriteIOPS` for the database in question.
+5) Remove the query `WriteIOPS`.
+6) Search for `ReadIOPS`.
+7) Check the box for `ReadIOPS` for the database in question.
+8) Apply a representative timerange.
+9) Select `Average` as the `Statistic` in the `Graphed Metrics` Tab.
+10) Select `5 minutes` as the `Period` in the `Graphed Metrics` Tab.
+11) In the upper right corner click on `Actions` .
+12) After expansion of `Actions` click on `Download as .csv`.
+
+
+#### Estimating the storage size based on historical IOPS data
+
+A downloadable spreadsheet was made so that a cost-effective storage size without performance degradation can be estimated.  
+Follow these steps to make the spreadsheet use your historical data:
+1) Open a google spreadsheet.
+2) Import the [spreadsheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vSnpbVo4KZKdRghQen-FLAOwft3OKDbOHogU2hn8sDrS35dc5kRkPKfnRVEso7jMTcnQ3nA64D17A9F/pub?output=ods) and choose `replace` to replace the recently opened spreadsheet.
+3) Add a Column between Column C and Column D. This is important. Do not skip this step.
+4) Highlight the first three columns, then select import.
+5) Choose upload.
+6) Select the .csv file containing the IOPS metrics.
+7) In the Import File configuration select `Replace data at selected cell` as `import location`.
+8) In the Import File configuration select `Detect automatically` as `separator type.
+9) In the Import File configuration check `Convert text to numbers, dates and formulas`.
+10) Click import data in the Import File configuration dialog box.
+11) Remove the recently added D column again.
+12) Expand the formulas for column D,E,F,G,H and I, by going to row 2021 and double-clicking the bottom right corner of each last filled cell.
+13) Go to the `chart` sheet and edit the range of the chart to `data!A6:I{lastrow}` where `{lastrow}` is the last row number of your data.
+14) In the `edit chart` dialog, remove the Series you do not need such as `data!B6:I{lastrow}` and `data!C6:I{lastrow}`.
+15) Now you can start playing around with the estimated IOPS located in the third row.
+16) See what the credits would have been if this amount of IOPS was added to the `BurstBalance` credits every second.
+17) Find an IOPS number such that the projected `BurstBalance` is comfortable enough at all times for your situation.
+18) Ideally the `BurstBalance` should never reach 0, since then the performance would be impacted heavily.
+19) Divide the IOPS number by 3 to find the GP2 storage size you minimally need to sustain the burst necessary for your database access patterns.
+
+#### Real life use case
+
+The `ReadIOPS` and `WriteIOPS` in the spreadsheet are the production `ReadIOPS` and `WriteIOPS` of the MySQL instance in a limited timeframe.
+
+##### Interpreting the data in the spreadsheet by making use of the graph
+On the 15th of May the hypothetical `BurstBalance` was at its lowest point in the selected time interval.
+![Graph of projected lowest burst balance](/MySQL_RDS_Instance_BurstBalanceLowestPointInGraph.png)
+If only 350 IOPS credits are added to the `BurstBalance` credits every second, then there would be no credits left around 22:00.
+This is visible since the value of the blue line is zero on the 15th of May around 22:00.
+
+To make sure there are still credits left, I chose to have at least 20% of `BurstBalance` left at all times.
+This means that the `BurstBalance` in this limited time window can never drop below 1120000 IOPS credits.
+
+The green line representing 425 IOPS never drops below 1120000 IOPS credits.
+So 425 IOPS is chosen as a safe IOPS baseline to replenish the `BurstBalance`.  
+
 To calculate the size of the GP2 volume in GB to accommodate for this burst pattern, divide the required IOPS replenishing rate by 3, which is 141.6666 GB.
+
 The initially configured Volume size of this RDS instance was 500GB.
 Reducing the volume to 141.6666GB, slashes storage costs by another 71.8%.
 
 ## Application optimization
+
 Costs can be further reduced by optimizing the application using the database so that less IOPS are used.
 If the database contains a lot of data, evaluate whether all this data is still necessary.
 Storing fewer data, or using less IOPS give you the opportunity to reduce the GP2 volume so that even more costs can be saved.
 
 ## Database logs
+
 Consider not logging the database logs to cloudwatch to reduce Cloudwatch costs.
+
 ### Real-life use case
+
 Our logs are still sent to cloudwatch, since the cost is minimal compared to compute and storage, and it helps for troubleshooting.
 
 # Cost savings summary
-compute costs reduced by 58.8% by rightsizing type and instance size.
-compute costs again reduced by 37% by reserving instances for one year.
-storage costs reduced by 71.8% by rightsizing the volume while taking BurstBalance into account.
-The compute costs were reduced by approximately 74% and the storage costs were reduced by 71.8%.
+
+Compute costs are reduced by 58.8% by rightsizing type and instance size.  
+Compute costs are then reduced by 37% by reserving instances for one year.   
+Storage costs are reduced by 71.8% by rightsizing the volume while taking BurstBalance into account.  
+The compute costs were reduced by approximately 74% and the storage costs were reduced by 71.8%.  
+
 Data transfer and log costs were rather limited, leading to an approximate cost saving of 70%.
 

@@ -3,3 +3,4 @@ languageCode = 'en-us'
 title = 'Blog on software, infrastructure and its accompanying lifestyle'
 theme = "ananke"
 disqusShortname = 'softwareconviction-com'
+enableRobotsTXT = true
