@@ -1,5 +1,5 @@
 ---
-title: "The effect of memory configuration on AWS Lambda's network throughput"
+title: "The effect of memory configuration on AWS Lambda's network throughput."
 date: 2022-04-07T18:28:22+02:00
 draft: false
 ---

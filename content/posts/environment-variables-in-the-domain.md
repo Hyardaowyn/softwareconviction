@@ -1,5 +1,5 @@
 ---
-title: "The Use of Environment-Specific Variables within the Hexagon of Hexagonal Architecture and Its Impact on Testing and Functionality"
+title: "The Use of Environment-Specific Variables within the Hexagon of Hexagonal Architecture and Its Impact on Testing and Functionality."
 date: 2023-08-11T15:15:22+02:00
 draft: false
 ---

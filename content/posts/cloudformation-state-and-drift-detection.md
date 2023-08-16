@@ -1,5 +1,5 @@
 ---
-title: "Cloudformation drift detection"
+title: "A technical and preference comparison of terraform and cloudformation as IAC tools."
 date: 2022-05-18T17:10:22+02:00
 authors: ["Geert Van Wauwe"]
 draft: false
